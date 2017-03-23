@@ -10,8 +10,11 @@ import com.weibo.api.motan.config.RegistryConfig;
 import com.weibo.api.motan.config.springsupport.annotation.MotanReferer;
 import com.weibo.api.motan.config.springsupport.annotation.MotanService;
 import com.weibo.api.motan.config.springsupport.util.SpringBeanUtil;
+import com.weibo.api.motan.rpc.init.Initializable;
+import com.weibo.api.motan.rpc.init.InitializationFactory;
 import com.weibo.api.motan.util.ConcurrentHashSet;
 import com.weibo.api.motan.util.LoggerUtil;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.core.Ordered;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -42,7 +46,7 @@ import java.util.concurrent.ConcurrentMap;
  * <p>
  * Created by fld on 16/5/13.
  */
-public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor, BeanPostProcessor, BeanFactoryAware {
+public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor, BeanPostProcessor, BeanFactoryAware, Ordered {
 
 
     private String id;
@@ -62,7 +66,11 @@ public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor,
     private final Set<ServiceConfigBean<?>> serviceConfigs = new ConcurrentHashSet<ServiceConfigBean<?>>();
 
     private final ConcurrentMap<String, RefererConfigBean> referenceConfigs = new ConcurrentHashMap<String, RefererConfigBean>();
-
+    static{
+        //custom Initializable before motan beans inited
+        Initializable initialization = InitializationFactory.getInitialization();
+        initialization.init();
+    }
 
     /**
      * @param beanFactory
@@ -551,5 +559,10 @@ public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor,
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
     }
 }
